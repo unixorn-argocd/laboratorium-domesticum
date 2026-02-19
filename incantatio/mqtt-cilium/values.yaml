@@ -1,0 +1,83 @@
+kubernetesClusterDomain: cluster.local
+osquittoConfig:
+  mosquittoConf: |-
+    persistence true
+    persistence_location /mosquitto/data
+    log_dest stdout
+    # Explicitly bind to 0.0.0.0 to allow K8s Service traffic
+    listener 1883 0.0.0.0
+    allow_anonymous false
+    password_file /mosquitto/config/password.txt
+    listener 9001 0.0.0.0
+    protocol websockets
+    # # MQTT over TLS
+    # listener 8883
+    # cafile /mosquitto/certs/ca.crt
+    # certfile /mosquitto/certs/tls.crt
+    # keyfile /mosquitto/certs/tls.key
+    # # MQTT over WebSockets (Secure)
+    # listener 9001
+    # protocol websockets
+    # cafile /mosquitto/certs/ca.crt
+    # certfile /mosquitto/certs/tls.crt
+    # keyfile /mosquitto/certs/tls.key
+osquittoDeployment:
+  initPermissions:
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      runAsNonRoot: true
+      runAsUser: 1883
+      seccompProfile:
+        type: RuntimeDefault
+    image:
+      repository: busybox
+      tag: latest
+  mosquitto:
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1883
+      seccompProfile:
+        type: RuntimeDefault
+    image:
+      repository: eclipse-mosquitto
+      tag: latest
+    resources:
+      limits:
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  nodeSelector: {}
+  podSecurityContext:
+    fsGroup: 1883
+    fsGroupChangePolicy: Always
+    runAsGroup: 1883
+    runAsNonRoot: true
+    runAsUser: 1883
+    seccompProfile:
+      type: RuntimeDefault
+  replicas: 1
+  tolerations: []
+  topologySpreadConstraints: []
+pvc:
+  osquittoDataPvc:
+    storageRequest: 1Gi
+qttLb:
+  ports:
+  - name: mqtt-tcp
+    port: 1883
+    protocol: TCP
+    targetPort: 1883
+  - name: mqtt-websocket
+    port: 9001
+    protocol: TCP
+    targetPort: 9001
+  type: LoadBalancer

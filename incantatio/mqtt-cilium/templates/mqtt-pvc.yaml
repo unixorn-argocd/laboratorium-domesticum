@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "mqtt-cilium.fullname" . }}-osquitto-data-pvc
+  labels:
+  {{- include "mqtt-cilium.labels" . | nindent 4 }}
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.pvc.osquittoDataPvc.storageRequest | quote }}
