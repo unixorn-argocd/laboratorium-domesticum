@@ -1,5 +1,5 @@
 kubernetesClusterDomain: cluster.local
-osquittoConfig:
+mosquittoConfig:
   mosquittoConf: |-
     persistence true
     persistence_location /mosquitto/data
@@ -21,7 +21,7 @@ osquittoConfig:
     # cafile /mosquitto/certs/ca.crt
     # certfile /mosquitto/certs/tls.crt
     # keyfile /mosquitto/certs/tls.key
-osquittoDeployment:
+mosquittoDeployment:
   initPermissions:
     containerSecurityContext:
       allowPrivilegeEscalation: false
@@ -68,9 +68,9 @@ osquittoDeployment:
   tolerations: []
   topologySpreadConstraints: []
 pvc:
-  osquittoDataPvc:
+  mosquittoDataPvc:
     storageRequest: 1Gi
-qttLb:
+mqttLb:
   ports:
   - name: mqtt-tcp
     port: 1883

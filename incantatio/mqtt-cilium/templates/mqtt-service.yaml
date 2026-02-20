@@ -11,9 +11,9 @@ metadata:
     lbipam.cilium.io/ips: 10.0.1.46
     lbipam.cilium.io/sharing-key: mqtt
 spec:
-  type: {{ .Values.qttLb.type }}
+  type: {{ .Values.mqttLb.type }}
   selector:
     app: mosquitto
     {{- include "mqtt-cilium.selectorLabels" . | nindent 4 }}
   ports:
-  {{- .Values.qttLb.ports | toYaml | nindent 2 }}
+  {{- .Values.mqttLb.ports | toYaml | nindent 2 }}
