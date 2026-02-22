@@ -1,6 +1,7 @@
 apiVersion: v2
 name: mqtt-cilium
 description: A Helm chart for Kubernetes
+icon: https://raw.githubusercontent.com/necronomicodex/mqtt-cilium/refs/heads/main/mqtt-cilium/mosquitto-color-icon.png
 # A chart can be either an 'application' or a 'library' chart.
 #
 # Application charts are a collection of templates that can be packaged into versioned archives
