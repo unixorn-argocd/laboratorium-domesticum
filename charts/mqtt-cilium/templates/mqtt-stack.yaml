@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mqtt-cilium.fullname" . }}-mosquitto-config
+  labels:
+  {{- include "mqtt-cilium.labels" . | nindent 4 }}
+data:
+  mosquitto.conf: {{ .Values.mosquittoConfig.mosquittoConf | toYaml | indent 1 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mqtt-cilium.fullname" . }}-mosquitto-deployment
+  labels:
+  {{- include "mqtt-cilium.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.mosquittoDeployment.replicas }}
+  selector:
+    matchLabels:
+      app: mosquitto
+    {{- include "mqtt-cilium.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+      {{- include "mqtt-cilium.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.mosquittoDeployment.mosquitto.image.repository }}:{{ .Values.mosquittoDeployment.mosquitto.image.tag
+          | default .Chart.AppVersion }}
+        name: mosquitto
+        ports:
+        - containerPort: 1883
+        - containerPort: 9001
+        resources: {{- toYaml .Values.mosquittoDeployment.mosquitto.resources | nindent
+          10 }}
+        securityContext: {{- toYaml .Values.mosquittoDeployment.mosquitto.containerSecurityContext
+          | nindent 10 }}
+        volumeMounts:
+        - mountPath: /mosquitto/config/mosquitto.conf
+          name: config
+          subPath: mosquitto.conf
+        - mountPath: /mosquitto/data
+          name: data
+        - mountPath: /mosquitto/config/password.txt
+          name: writable-config
+          subPath: password.txt
+        - mountPath: /tmp
+          name: tmp
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - |
+          # Copy from read-only secret to writable emptyDir
+          # It will be owned by UID 1883 automatically
+          cp /mnt/secret/password_file /mosquitto/writable-config/password.txt
+          chmod 0600 /mosquitto/writable-config/password.txt
+        env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.mosquittoDeployment.initPermissions.image.repository }}:{{ .Values.mosquittoDeployment.initPermissions.image.tag
+          | default .Chart.AppVersion }}
+        name: init-permissions
+        resources: {}
+        securityContext: {{- toYaml .Values.mosquittoDeployment.initPermissions.containerSecurityContext
+          | nindent 10 }}
+        volumeMounts:
+        - mountPath: /mnt/secret
+          name: password-file-raw
+          readOnly: true
+        - mountPath: /mosquitto/writable-config
+          name: writable-config
+      nodeSelector: {{- toYaml .Values.mosquittoDeployment.nodeSelector | nindent 8 }}
+      securityContext: {{- toYaml .Values.mosquittoDeployment.podSecurityContext | nindent
+        8 }}
+      serviceAccountName: {{ include "mqtt-cilium.serviceAccountName" . }}
+      tolerations: {{- toYaml .Values.mosquittoDeployment.tolerations | nindent 8 }}
+      topologySpreadConstraints: {{- toYaml .Values.mosquittoDeployment.topologySpreadConstraints
+        | nindent 8 }}
+      volumes:
+      - configMap:
+          name: {{ include "mqtt-cilium.fullname" . }}-mosquitto-config
+        name: config
+      - name: password-file-raw
+        secret:
+          secretName: mqtt-secret
+      - emptyDir: {}
+        name: writable-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ include "mqtt-cilium.fullname" . }}-mosquitto-data-pvc
+      - emptyDir: {}
+        name: tmp

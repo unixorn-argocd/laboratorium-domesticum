@@ -1,0 +1,10 @@
+---
+creation_rules:
+  # - path_regex: /*secrets(\.encrypted)?.yaml
+  - path_regex: /*?.yaml
+    encrypted_regex: "^(id|password|password_file|app-password|web-password|secret|secretboxencryptionsecret|bootstraptoken|secretboxencryption|token|ca|crt|key|access-key-id|secret-access-key|hostedZoneID|email|data|stringdata|api-token|encryption-token|encryption-key)$"
+    # Only do a mac on the encrypted elements so we can edit the files
+    # non-encrypted bits with our editor of choice
+    # Disable because the sops-operator can't handle it yet
+    # mac_only_encrypted: true
+    age: age1t2fr4u6yvfja69s59rwt70rwa7vhu06sen0m6lxygsyn2dpgzc4s0ma7wy
