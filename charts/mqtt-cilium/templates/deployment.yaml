@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mqtt-cilium.fullname" . }}
+  labels:
+    {{- include "mqtt-cilium.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.mosquittoDeployment.replicas }}
+  selector:
+    matchLabels:
+      {{- include "mqtt-cilium.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        # Only add secret checksum if the chart is actually managing the secret
+        {{- if .Values.mosquittoSecrets.create }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- end }}
+      labels:
+        {{- include "mqtt-cilium.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.mosquittoDeployment.podSecurityContext | nindent 8 }}
+      
+      initContainers:
+        - name: init-permissions
+          image: "{{ .Values.mosquittoDeployment.initPermissions.image.repository }}:{{ .Values.mosquittoDeployment.initPermissions.image.tag }}"
+          command: ["sh", "-c", "chown -R 1883:1883 /mosquitto/data"]
+          volumeMounts:
+            - name: mosquitto-data
+              mountPath: /mosquitto/data
+
+      containers:
+        - name: mosquitto
+          image: "{{ .Values.mosquittoDeployment.image.repository }}:{{ .Values.mosquittoDeployment.image.tag }}"
+          ports:
+            - name: mqtt-tcp
+              containerPort: 1883
+            - name: mqtt-ws
+              containerPort: 9001
+          
+          livenessProbe:
+            tcpSocket:
+              port: 1883
+          readinessProbe:
+            tcpSocket:
+              port: 1883
+
+          volumeMounts:
+            - name: mosquitto-config
+              mountPath: /mosquitto/config/mosquitto.conf
+              subPath: mosquitto.conf
+            - name: mosquitto-auth
+              mountPath: /mosquitto/config/password.txt
+              subPath: password.txt
+            - name: mosquitto-data
+              mountPath: /mosquitto/data
+      
+      volumes:
+        - name: mosquitto-config
+          configMap:
+            name: {{ include "mqtt-cilium.fullname" . }}-config
+        - name: mosquitto-auth
+          secret:
+            # Logic: If existingSecret is provided, use it. Else, use chart's fullname-auth.
+            secretName: {{ default (printf "%s-auth" (include "mqtt-cilium.fullname" .)) .Values.mosquittoSecrets.existingSecret }}
+            defaultMode: 0600
+        - name: mosquitto-data
+          persistentVolumeClaim:
+            claimName: {{ include "mqtt-cilium.fullname" . }}-data
