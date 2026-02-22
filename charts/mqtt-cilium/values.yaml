@@ -1,8 +1,12 @@
 kubernetesClusterDomain: cluster.local
+# Configuration (Supports TPL)
 mosquittoConfig:
   mosquittoConf: |-
+    # This will render as: # Config for my-release-mqtt
+    # Config for {{ .Release.Name }}
     persistence true
     persistence_location /mosquitto/data
+    # Dynamic listener using Helm release name
     log_dest stdout
     # Explicitly bind to 0.0.0.0 to allow K8s Service traffic
     listener 1883 0.0.0.0
@@ -21,68 +25,41 @@ mosquittoConfig:
     # cafile /mosquitto/certs/ca.crt
     # certfile /mosquitto/certs/tls.crt
     # keyfile /mosquitto/certs/tls.key
+
+# Networking
+cilium:
+  ips: "10.0.1.46"
+  poolName: "default-pool"
+  sharingKey: "mqtt"
+
+# Deployment
 mosquittoDeployment:
+  replicas: 1
+  image:
+    repository: eclipse-mosquitto
+    tag: "2.0.18"
+  podSecurityContext:
+    fsGroup: 1883
   initPermissions:
-    containerSecurityContext:
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-        - ALL
-      runAsNonRoot: true
-      runAsUser: 1883
-      seccompProfile:
-        type: RuntimeDefault
     image:
       repository: busybox
       tag: latest
-  mosquitto:
-    containerSecurityContext:
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-        - ALL
-      readOnlyRootFilesystem: true
-      runAsNonRoot: true
-      runAsUser: 1883
-      seccompProfile:
-        type: RuntimeDefault
-    image:
-      repository: eclipse-mosquitto
-      tag: latest
-    resources:
-      limits:
-        memory: 128Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
-  nodeSelector: {}
-  podSecurityContext:
-    fsGroup: 1883
-    fsGroupChangePolicy: Always
-    runAsGroup: 1883
-    runAsNonRoot: true
-    runAsUser: 1883
-    seccompProfile:
-      type: RuntimeDefault
-  replicas: 1
-  tolerations: []
-  topologySpreadConstraints: []
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# If you want to define the password secret outside helm to make it
+# easier to update, set create to false and existingSecret to the name
+# of your secret
+mosquittoSecrets:
+  create: true
+  existingSecret: ""
+  passwordData: "admin:$6$..."
+
+# Storage
 pvc:
-  mosquittoDataPvc:
-    storageRequest: 1Gi
-mqttLb:
-  ports:
-  - name: mqtt-tcp
-    port: 1883
-    protocol: TCP
-    targetPort: 1883
-  - name: mqtt-websocket
-    port: 9001
-    protocol: TCP
-    targetPort: 9001
-  type: LoadBalancer
-cilium:
-  pool-name: default-pool
-  assign-internal-ip: "true"
-  ips: 10.0.1.46
-  sharing-key: mqtt
+  storageRequest: 1Gi
