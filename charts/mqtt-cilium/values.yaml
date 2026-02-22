@@ -28,7 +28,7 @@ mosquittoConfig:
 
 # Networking
 cilium:
-  ips: "10.0.1.46"
+  ips: "10.9.8.7"
   poolName: "default-pool"
   sharingKey: "mqtt"
 
@@ -51,7 +51,14 @@ mosquittoDeployment:
     requests:
       cpu: 100m
       memory: 128Mi
-
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+  readinessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
 # If you want to define the password secret outside helm to make it
 # easier to update, set create to false and existingSecret to the name
 # of your secret
