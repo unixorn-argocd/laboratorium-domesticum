@@ -4,6 +4,9 @@ metadata:
   name: {{ include "mqtt-cilium.fullname" . }}
   labels:
     {{- include "mqtt-cilium.labels" . | nindent 4 }}
+  annotations:
+    {{- $secretName := default (printf "%s-auth" (include "mqtt-cilium.fullname" .)) .Values.mosquittoSecrets.existingSecret }}
+    secret.reloader.stakater.com/reload: {{ $secretName | quote }}
 spec:
   replicas: {{ .Values.mosquittoDeployment.replicas }}
   selector:
@@ -13,7 +16,6 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-        # Only add secret checksum if the chart is actually managing the secret
         {{- if .Values.mosquittoSecrets.create }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- end }}
@@ -40,12 +42,21 @@ spec:
             - name: mqtt-ws
               containerPort: 9001
           
+          # Configurable Liveness Probe
           livenessProbe:
             tcpSocket:
               port: 1883
+            initialDelaySeconds: {{ .Values.mosquittoDeployment.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.mosquittoDeployment.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.mosquittoDeployment.livenessProbe.timeoutSeconds }}
+          
+          # Configurable Readiness Probe
           readinessProbe:
             tcpSocket:
               port: 1883
+            initialDelaySeconds: {{ .Values.mosquittoDeployment.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.mosquittoDeployment.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.mosquittoDeployment.readinessProbe.timeoutSeconds }}
 
           volumeMounts:
             - name: mosquitto-config
@@ -63,8 +74,7 @@ spec:
             name: {{ include "mqtt-cilium.fullname" . }}-config
         - name: mosquitto-auth
           secret:
-            # Logic: If existingSecret is provided, use it. Else, use chart's fullname-auth.
-            secretName: {{ default (printf "%s-auth" (include "mqtt-cilium.fullname" .)) .Values.mosquittoSecrets.existingSecret }}
+            secretName: {{ $secretName }}
             defaultMode: 0600
         - name: mosquitto-data
           persistentVolumeClaim:

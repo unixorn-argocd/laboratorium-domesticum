@@ -3,6 +3,7 @@
 This Helm chart deploys an **Eclipse Mosquitto** MQTT broker on Kubernetes, specifically configured for homelabs using **Cilium LoadBalancer IPAM**.
 
 ## 🚀 Features
+
 * **Cilium Integration**: Automated IP assignment and sharing keys for the LoadBalancer.
 * **Security**: Runs as non-root (UID 1883) with restricted filesystem permissions.
 * **Authentication**: Supports password file authentication via Kubernetes Secrets.
@@ -26,7 +27,7 @@ Update your `values.yaml` with the generated hash and your desired Cilium IP:
 
 ```yaml
 cilium:
-  ips: "10.0.1.46"
+  ips: "10.9.8.7"
 mosquittoSecrets:
   passwordData: "admin:$6$..."
 ```
@@ -35,7 +36,9 @@ mosquittoSecrets:
 
 #### ArgoCD
 
-Here's an ArgoCD Application you can customize and use to install this chart.
+##### Inline configuration
+
+Here's an ArgoCD Application you can customize with inline settings and use to install this chart.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -49,7 +52,7 @@ spec:
     server: https://kubernetes.default.svc
     namespace: iot
   source:
-    repoURL: 'https://github.com/your-username/your-repo.git'
+    repoURL: 'https://github.com/unixorn-argocd/laboratorium-domesticum.git'
     targetRevision: HEAD
     path: charts/mqtt-cilium
     helm:
@@ -74,14 +77,57 @@ spec:
 
         # 3. Networking Overrides
         cilium:
-          ips: "10.0.1.50"
+          ips: "10.9.8.7"
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
 ```
 
-#### Directly with `helm`
+##### Argo CD Multi-Source Application
+
+This manifest lets you keep the `values.yaml` in one repository, and use the chart from another.
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mosquitto-mqtt-multisource
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: iot
+  sources:
+    # Source 1: The Helm Chart
+    - repoURL: 'https://github.com/unixorn-argocd/laboratorium-domesticum.git'
+      targetRevision: main
+      path: charts/mqtt-cilium
+    
+    # Source 2: The Configuration (Values)
+    - repoURL: 'https://github.com/your-org/cluster-config.git'
+      targetRevision: HEAD
+      # We give this source an alias 'config' so we can reference it
+      ref: config
+
+  sourceHydrator: # This section links them
+    helm:
+      valueFiles:
+        # '$config' refers to the 'ref: config' source above
+        - $config/mosquitto/values.yaml
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+```
+
+#### Install directly with `helm`
+
+If you prefer to install via `helm` directly
 
 ```bash
 helm upgrade --install my-mqtt ./mqtt-cilium
@@ -101,9 +147,25 @@ helm upgrade --install my-mqtt ./mqtt-cilium
 
 | Parameter                       | Description                   | Default Value     |
 | ------------------------------- | ----------------------------- | ----------------- |
-| `mosquittoDeployment.replicas`  | Number of broker instances	  | 1                 |
+| `mosquittoDeployment.replicas`  | Number of broker instances    | 1                 |
 | `mosquittoConfig.mosquittoConf` | The raw `mosquitto.conf` text | (See values.yaml) |
 | `pvc.storageRequest`            | Size of the data volume       | 1Gi               |
+
+### `livenessProbe` settings
+
+| Parameter                           | Description                             | Default Value     |
+| ----------------------------------- | --------------------------------------- | ----------------- |
+| `livenessProbe.initialDelaySeconds` | Liveness probe initial delay in seconds | 30                |
+| `livenessProbe.periodSeconds`       | Time between probes                     | 10                |
+| `livenessProbe.timeoutSeconds`      | How many seconds before timing out      | 5                 |
+
+### `rivenessProbe` settings
+
+| Parameter                           | Description                             | Default Value     |
+| ----------------------------------- | --------------------------------------- | ----------------- |
+| `livenessProbe.initialDelaySeconds` | Liveness probe initial delay in seconds | 30                |
+| `livenessProbe.periodSeconds`       | Time between probes                     | 10                |
+| `livenessProbe.timeoutSeconds`      | How many seconds before timing out      | 5                 |
 
 ## Troubleshooting
 
