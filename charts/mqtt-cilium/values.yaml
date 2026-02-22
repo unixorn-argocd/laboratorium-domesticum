@@ -81,3 +81,8 @@ mqttLb:
     protocol: TCP
     targetPort: 9001
   type: LoadBalancer
+cilium:
+  pool-name: default-pool
+  assign-internal-ip: "true"
+  ips: 10.0.1.46
+  sharing-key: mqtt
