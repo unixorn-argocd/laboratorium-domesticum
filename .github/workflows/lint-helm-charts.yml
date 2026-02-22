@@ -1,0 +1,25 @@
+name: Lint Helm Charts
+
+on:
+  pull_request:
+    paths:
+      - 'charts/**'
+      - '.github/workflows/lint-helm-charts.yml'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: [actions/checkout@v6](https://github.com)
+        with:
+          # fetch-depth 0 is required for ct to detect changed charts correctly using git history
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: [azure/setup-helm@v4](https://github.com)
+        with:
+          version: v3.14.0
+
+      - name: Set up chart-testing
+        uses: [helm/chart-testing-action@v2.6.1](
