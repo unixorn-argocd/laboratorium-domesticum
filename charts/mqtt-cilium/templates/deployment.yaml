@@ -9,6 +9,7 @@ metadata:
     secret.reloader.stakater.com/reload: {{ $secretName | quote }}
 spec:
   replicas: {{ .Values.mosquittoDeployment.replicas | default 1 }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit | default 3 }}
   selector:
     matchLabels:
       {{- include "mqtt-cilium.selectorLabels" . | nindent 6 }}
