@@ -32,4 +32,7 @@ jobs:
 
       - name: Run chart-testing (lint)
         # This is the step that actually triggers the results you see in the PR
-        run: ct lint --target-branch ${{ github.event.pull_request.base.ref }} --validate-maintainers=false
+        run: |
+          ct lint --debug \
+            --target-branch ${{ github.event.pull_request.base.ref }} \
+            --validate-maintainers=false
