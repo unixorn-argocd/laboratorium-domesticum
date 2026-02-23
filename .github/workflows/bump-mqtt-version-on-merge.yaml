@@ -1,4 +1,4 @@
-name: Auto Version Bump
+name: Helm CI & Auto-Version
 
 on:
   push:
@@ -8,38 +8,74 @@ on:
       - 'charts/mqtt-cilium/**'
 
 jobs:
-  bump-version:
+  lint-and-bump:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # Required to create the formal GitHub Release
+      pull-requests: write 
+
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 2
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.12.0
 
       - name: Install yq
-        run: sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
-
-      - name: Increment Patch Version
         run: |
-          # Get current version from Chart.yaml
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+
+      - name: Helm Lint
+        run: helm lint charts/mqtt-cilium
+
+      - name: Check for Manual Changes
+        id: check_changes
+        run: |
+          CHART_VER_CHANGED=$(git diff HEAD^ HEAD charts/mqtt-cilium/Chart.yaml | grep '^+version:' || true)
+          if [ -n "$CHART_VER_CHANGED" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Sync and Bump
+        if: steps.check_changes.outputs.skip == 'false'
+        id: bump
+        run: |
+          NEW_TAG=$(yq '.mosquittoDeployment.image.tag' charts/mqtt-cilium/values.yaml)
+          yq -i ".appVersion = \"$NEW_TAG\"" charts/mqtt-cilium/Chart.yaml
+          
           CURRENT_VERSION=$(yq '.version' charts/mqtt-cilium/Chart.yaml)
-          
-          # Split version and increment the patch (0.1.5 -> 0.1.6)
-          BASE_VERSION=$(echo $CURRENT_VERSION | cut -d. -f1-2)
-          PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
-          NEW_VERSION="$BASE_VERSION.$((PATCH + 1))"
-          
-          # Update the file
+          NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
           yq -i ".version = \"$NEW_VERSION\"" charts/mqtt-cilium/Chart.yaml
           
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "FINAL_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Commit and Push
+        if: steps.check_changes.outputs.skip == 'false'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add charts/mqtt-cilium/Chart.yaml
-          git commit -m "chore: bump chart version to ${{ env.NEW_VERSION }} [skip ci]"
+          git commit -m "chore: auto-bump to ${{ env.FINAL_VERSION }} [skip ci]"
           git push
+
+      # --- NEW RELEASE STEP ---
+      - name: Create GitHub Release
+        if: steps.check_changes.outputs.skip == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.FINAL_VERSION }}
+          name: Release v${{ env.FINAL_VERSION }}
+          # Automatically generates a list of commits since the last release
+          generate_release_notes: true 
+          body: |
+            Automated release for MQTT Cilium Chart.
+            Chart Version: ${{ env.FINAL_VERSION }}
+            Mosquitto Version: ${{ env.NEW_TAG }}
