@@ -5,10 +5,11 @@ metadata:
   labels:
     {{- include "mqtt-cilium.labels" . | nindent 4 }}
   annotations:
-    cilium.io/assign-internal-ip: {{ .Values.cilium.assignInternalIP | default "true" | quote }}
-    cilium.io/lb-ipam-pool-name: {{ .Values.cilium.poolName | default "default-pool" | quote }}
+# Use the 'index' function to safely access keys with hyphens or dots
+    cilium.io/assign-internal-ip: {{ index .Values.cilium "assign-internal-ip" | quote }}
+    cilium.io/lb-ipam-pool-name: {{ index .Values.cilium "pool-name" | quote }}
     lbipam.cilium.io/ips: {{ .Values.cilium.ips | quote }}
-    lbipam.cilium.io/sharing-key: {{ .Values.cilium.sharingKey | default "mqtt" | quote }}
+    lbipam.cilium.io/sharing-key: {{ index .Values.cilium "sharing-key" | quote }}
 spec:
   type: {{ .Values.mqttLb.type | default "LoadBalancer" }}
   selector:
