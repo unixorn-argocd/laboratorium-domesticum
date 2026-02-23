@@ -11,7 +11,7 @@ metadata:
     lbipam.cilium.io/ips: {{ .Values.cilium.ips | quote }}
     lbipam.cilium.io/sharing-key: {{ .Values.cilium.sharingKey | quote }}
 spec:
-  type: {{ .Values.mqttLb.type }}
+  type: {{ .Values.mqttLb.type | default "LoadBalancer" }}
   selector:
     {{- include "mqtt-cilium.selectorLabels" . | nindent 4 }}
   ports:
