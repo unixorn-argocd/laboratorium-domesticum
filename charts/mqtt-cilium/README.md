@@ -1,3 +1,26 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Mosquitto MQTT Chart (Cilium Optimized)](#mosquitto-mqtt-chart-cilium-optimized)
+  - [🚀 Features](#-features)
+  - [🛠 Quick Start](#%F0%9F%9B%A0-quick-start)
+    - [1. Generate a Password Hash](#1-generate-a-password-hash)
+    - [2. Configuration](#2-configuration)
+    - [3. Install the chart](#3-install-the-chart)
+      - [ArgoCD](#argocd)
+        - [Inline configuration](#inline-configuration)
+        - [Argo CD Multi-Source Application](#argo-cd-multi-source-application)
+      - [Install directly with `helm`](#install-directly-with-helm)
+  - [Configuration Reference](#configuration-reference)
+    - [Cilium Settings](#cilium-settings)
+    - [Mosquitto Settings](#mosquitto-settings)
+    - [`livenessProbe` settings](#livenessprobe-settings)
+    - [`readinessProbe` settings](#readinessprobe-settings)
+  - [Troubleshooting](#troubleshooting)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Mosquitto MQTT Chart (Cilium Optimized)
 
 This Helm chart deploys an **Eclipse Mosquitto** MQTT broker on Kubernetes, specifically configured for homelabs using **Cilium LoadBalancer IPAM**.
@@ -104,7 +127,7 @@ spec:
     - repoURL: 'https://github.com/unixorn-argocd/laboratorium-domesticum.git'
       targetRevision: main
       path: charts/mqtt-cilium
-    
+
     # Source 2: The Configuration (Values)
     - repoURL: 'https://github.com/your-org/cluster-config.git'
       targetRevision: HEAD
@@ -137,35 +160,35 @@ helm upgrade --install my-mqtt ./mqtt-cilium
 
 ### Cilium Settings
 
-| Parameter           | Description                                         | Default Value  |
-| ------------------- | --------------------------------------------------- | -------------- |
-| `cilium.poolName`   | The Cilium IPAM pool to draw from                   | `default-pool` |
-| `cilium.ips`        | Static internal IP to request                       | `10.0.1.46`    |
-| `cilium.sharingKey` | Key to allow multiple services to share the same IP | `mqtt`         |
+| Parameter                            | Description                                         | Default Value     |
+| ------------------------------------ | --------------------------------------------------- | ----------------- |
+| `cilium.poolName`                    | The Cilium IPAM pool to draw from                   | `default-pool`    |
+| `cilium.ips`                         | Static internal IP to request                       | `10.0.1.46`       |
+| `cilium.sharingKey`                  | Key to allow multiple services to share the same IP | `mqtt`            |
 
 ### Mosquitto Settings
 
-| Parameter                       | Description                   | Default Value     |
-| ------------------------------- | ----------------------------- | ----------------- |
-| `mosquittoDeployment.replicas`  | Number of broker instances    | 1                 |
-| `mosquittoConfig.mosquittoConf` | The raw `mosquitto.conf` text | (See values.yaml) |
-| `pvc.storageRequest`            | Size of the data volume       | 1Gi               |
+| Parameter                            | Description                                         | Default Value     |
+| ------------------------------------ | --------------------------------------------------- | ----------------- |
+| `mosquittoDeployment.replicas`       | Number of broker instances                          | 1                 |
+| `mosquittoConfig.mosquittoConf`      | The raw `mosquitto.conf` text                       | See `values.yaml` |
+| `pvc.storageRequest`                 | Size of the data volume                             | 1Gi               |
 
 ### `livenessProbe` settings
 
-| Parameter                           | Description                             | Default Value     |
-| ----------------------------------- | --------------------------------------- | ----------------- |
-| `livenessProbe.initialDelaySeconds` | Liveness probe initial delay in seconds | 30                |
-| `livenessProbe.periodSeconds`       | Time between probes                     | 10                |
-| `livenessProbe.timeoutSeconds`      | How many seconds before timing out      | 5                 |
+| Parameter                            | Description                                         | Default Value     |
+| ------------------------------------ | --------------------------------------------------- | ----------------- |
+| `livenessProbe.initialDelaySeconds`  | Liveness probe initial delay in seconds             | 30                |
+| `livenessProbe.periodSeconds`        | Time between probes                                 | 10                |
+| `livenessProbe.timeoutSeconds`       | How many seconds before timing out                  | 5                 |
 
-### `rivenessProbe` settings
+### `readinessProbe` settings
 
-| Parameter                           | Description                             | Default Value     |
-| ----------------------------------- | --------------------------------------- | ----------------- |
-| `livenessProbe.initialDelaySeconds` | Liveness probe initial delay in seconds | 30                |
-| `livenessProbe.periodSeconds`       | Time between probes                     | 10                |
-| `livenessProbe.timeoutSeconds`      | How many seconds before timing out      | 5                 |
+| Parameter                            | Description                                         | Default Value     |
+| --------------------------------=--- | --------------------------------------------------- | ----------------- |
+| `readinessProbe.initialDelaySeconds` | Liveness probe initial delay in seconds             | 30                |
+| `readinessProbe.periodSeconds`       | Time between probes                                 | 10                |
+| `readinessProbe.timeoutSeconds`      | How many seconds before timing out                  | 5                 |
 
 ## Troubleshooting
 
