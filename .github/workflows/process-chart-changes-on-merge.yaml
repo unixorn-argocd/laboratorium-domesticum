@@ -1,4 +1,4 @@
-name: Monorepo Parallel CI
+name: Parallel Helm Chart Processing CI
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       has_changes: ${{ steps.set-matrix.outputs.has_changes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - id: set-matrix
@@ -39,7 +39,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -60,7 +60,7 @@ jobs:
           if git diff HEAD^ HEAD "$CHART_DIR/Chart.yaml" | grep -q '^+version:'; then
             echo "manual=true" >> $GITHUB_OUTPUT
           else
-            # 3. Sync AppVersion & Bump Patch
+          # 3. Sync AppVersion & Bump Patch
             TAG=$(yq '.image.tag // .mosquittoDeployment.image.tag' "$CHART_DIR/values.yaml")
             [ "$TAG" != "null" ] && yq -i ".appVersion = \"$TAG\"" "$CHART_DIR/Chart.yaml"
             
