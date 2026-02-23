@@ -6,10 +6,11 @@ metadata:
     homelab.service: mqtt
     {{- include "mqtt-cilium.labels" . | nindent 4 }}
   annotations:
-    cilium.io/assign-internal-ip: {{ .Values.cilium.assignInternalIp | quote }}
-    cilium.io/lb-ipam-pool-name: {{ .Values.cilium.poolName | quote }}
+    # Use 'quote' and 'default' to ensure it's always a string "true" or "false"
+    cilium.io/assign-internal-ip: {{ .Values.cilium.assignInternalIP | default "true" | quote }}
+    cilium.io/lb-ipam-pool-name: {{ .Values.cilium.poolName | default "default-pool" | quote }}
     lbipam.cilium.io/ips: {{ .Values.cilium.ips | quote }}
-    lbipam.cilium.io/sharing-key: {{ .Values.cilium.sharingKey | quote }}
+    lbipam.cilium.io/sharing-key: {{ .Values.cilium.sharingKey | default "mqtt" | quote }}
 spec:
   type: {{ .Values.mqttLb.type | default "LoadBalancer" }}
   selector:
