@@ -1,0 +1,82 @@
+name: Monorepo Parallel CI
+
+on:
+  push:
+    branches: [main]
+    paths: ['charts/**']
+
+jobs:
+  # JOB 1: Detect which charts changed
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has_changes: ${{ steps.set-matrix.outputs.has_changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: set-matrix
+        run: |
+          # Find directories in charts/ that have diffs
+          CHARTS=$(git diff --name-only HEAD^ HEAD | grep '^charts/' | cut -d/ -f2 | sort -u | jq -R -s -c 'split("\n")[:-1]')
+          if [ "$CHARTS" == "[]" ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "matrix=$CHARTS" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+  # JOB 2: Process each changed chart in parallel
+  process-charts:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chart: ${{衔fromJSON(needs.detect-changes.outputs.matrix)}}
+      fail-fast: false # Don't stop other charts if one fails
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Tools
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
+          azure/setup-helm@v4
+
+      - name: Lint & Bump ${{ matrix.chart }}
+        id: bump
+        run: |
+          CHART_DIR="charts/${{ matrix.chart }}"
+          
+          # 1. Lint
+          helm lint "$CHART_DIR"
+
+          # 2. Check for manual versioning
+          if git diff HEAD^ HEAD "$CHART_DIR/Chart.yaml" | grep -q '^+version:'; then
+            echo "manual=true" >> $GITHUB_OUTPUT
+          else
+            # 3. Sync AppVersion & Bump Patch
+            TAG=$(yq '.image.tag // .mosquittoDeployment.image.tag' "$CHART_DIR/values.yaml")
+            [ "$TAG" != "null" ] && yq -i ".appVersion = \"$TAG\"" "$CHART_DIR/Chart.yaml"
+            
+            CUR_VER=$(yq '.version' "$CHART_DIR/Chart.yaml")
+            NEW_VER=$(echo $CUR_VER | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+            yq -i ".version = \"$NEW_VER\"" "$CHART_DIR/Chart.yaml"
+            
+            echo "new_version=$NEW_VER" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit & Tag ${{ matrix.chart }}
+        if: steps.bump.outputs.manual != 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add "charts/${{ matrix.chart }}/Chart.yaml"
+          git commit -m "chore(${{ matrix.chart }}): bump to ${{ steps.bump.outputs.new_version }} [skip ci]"
+          git tag "${{ matrix.chart }}/v${{ steps.bump.outputs.new_version }}"
+          git push origin main --tags
