@@ -1,0 +1,45 @@
+name: Auto Version Bump
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'charts/mqtt-cilium/**'
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install yq
+        run: sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
+
+      - name: Increment Patch Version
+        run: |
+          # Get current version from Chart.yaml
+          CURRENT_VERSION=$(yq '.version' charts/mqtt-cilium/Chart.yaml)
+          
+          # Split version and increment the patch (0.1.5 -> 0.1.6)
+          BASE_VERSION=$(echo $CURRENT_VERSION | cut -d. -f1-2)
+          PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
+          NEW_VERSION="$BASE_VERSION.$((PATCH + 1))"
+          
+          # Update the file
+          yq -i ".version = \"$NEW_VERSION\"" charts/mqtt-cilium/Chart.yaml
+          
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add charts/mqtt-cilium/Chart.yaml
+          git commit -m "chore: bump chart version to ${{ env.NEW_VERSION }} [skip ci]"
+          git push
