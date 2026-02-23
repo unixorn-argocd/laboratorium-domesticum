@@ -5,6 +5,7 @@ fullnameOverride: ""
 
 # values.yaml
 replicaCount: 1
+
 # Number of old ReplicaSets to retain to allow rollback.
 # Kubernetes default is 10.
 revisionHistoryLimit: 10
