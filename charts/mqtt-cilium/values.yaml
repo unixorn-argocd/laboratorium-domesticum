@@ -73,7 +73,7 @@ cilium:
   assignInternalIP: "true"
   poolName: "default-pool"
   sharingKey: "mqtt"
-  ips: "" 
+  ips: ""
 
 # Persistence
 pvc:
