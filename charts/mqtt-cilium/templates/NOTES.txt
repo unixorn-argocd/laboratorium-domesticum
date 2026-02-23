@@ -1,14 +1,32 @@
 Congratulations! You have deployed {{ .Release.Name }}.
 
-1. Get the Mosquitto Service IP:
+Mosquitto MQTT Broker is deploying!
+
+1. Accessing the Broker:
+   The broker is available on the static IP: {{ .Values.cilium.ips }}
+   Port: 1883 (MQTT)
+   Port: 9001 (WebSockets)
+
+2. Get the Mosquitto Service IP:
    NOTE: It may take a few seconds for Cilium to assign the IP ({{ .Values.cilium.ips }}).
 
    export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "mqtt-cilium.fullname" . }}-lb -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
    echo "MQTT TCP Host: $SERVICE_IP:1883"
    echo "MQTT WS Host:  $SERVICE_IP:9001"
 
-2. Test the connection (TCP):
-   mosquitto_sub -h $SERVICE_IP -t "test/topic" -u admin -P <your_password>
-
 3. Check Pod Status:
    kubectl get pods --namespace {{ .Release.Namespace }} -l "{{ include "mqtt-cilium.selectorLabels" . | replace ": " "=" | replace "\n" "," | trimSuffix "," }}"
+
+4. Testing the Connection:
+   To test the connection from your local machine, run:
+   mosquitto_pub -h {{ .Values.cilium.ips }} -t "test/topic" -m "hello world" -u <your-username> -P <your-password>
+
+5. Namespace:
+   Everything is running in the '{{ .Release.Namespace }}' namespace.
+
+6. Secrets:
+   {{- if .Values.mosquittoSecrets.create }}
+   Password Secret was created by Helm.
+   {{- else }}
+   Using external secret: {{ .Values.mosquittoSecrets.existingSecret }}
+   {{- end }}

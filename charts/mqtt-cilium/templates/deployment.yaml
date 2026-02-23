@@ -8,7 +8,7 @@ metadata:
     {{- $secretName := default (printf "%s-auth" (include "mqtt-cilium.fullname" .)) .Values.mosquittoSecrets.existingSecret }}
     secret.reloader.stakater.com/reload: {{ $secretName | quote }}
 spec:
-  replicas: {{ .Values.mosquittoDeployment.replicas }}
+  replicas: {{ .Values.mosquittoDeployment.replicas | default 1 }}
   selector:
     matchLabels:
       {{- include "mqtt-cilium.selectorLabels" . | nindent 6 }}
@@ -24,7 +24,6 @@ spec:
     spec:
       securityContext:
         {{- toYaml .Values.mosquittoDeployment.podSecurityContext | nindent 8 }}
-      
       initContainers:
         - name: init-permissions
           image: "{{ .Values.mosquittoDeployment.initPermissions.image.repository }}:{{ .Values.mosquittoDeployment.initPermissions.image.tag }}"
@@ -32,42 +31,36 @@ spec:
           volumeMounts:
             - name: mosquitto-data
               mountPath: /mosquitto/data
-
       containers:
         - name: mosquitto
           image: "{{ .Values.mosquittoDeployment.image.repository }}:{{ .Values.mosquittoDeployment.image.tag }}"
+          imagePullPolicy: {{ .Values.mosquittoDeployment.image.pullPolicy | default "IfNotPresent" }}
           ports:
             - name: mqtt-tcp
               containerPort: 1883
             - name: mqtt-ws
               containerPort: 9001
-          
-          # Configurable Liveness Probe
+          resources:
+            {{- toYaml .Values.mosquittoDeployment.resources | nindent 12 }}
           livenessProbe:
             tcpSocket:
               port: 1883
-            initialDelaySeconds: {{ .Values.mosquittoDeployment.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.mosquittoDeployment.livenessProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.mosquittoDeployment.livenessProbe.timeoutSeconds }}
-          
-          # Configurable Readiness Probe
+            initialDelaySeconds: {{ .Values.mosquittoDeployment.livenessProbe.initialDelaySeconds | default 30 }}
+            periodSeconds: {{ .Values.mosquittoDeployment.livenessProbe.periodSeconds | default 10 }}
           readinessProbe:
             tcpSocket:
               port: 1883
-            initialDelaySeconds: {{ .Values.mosquittoDeployment.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.mosquittoDeployment.readinessProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.mosquittoDeployment.readinessProbe.timeoutSeconds }}
-
+            initialDelaySeconds: {{ .Values.mosquittoDeployment.readinessProbe.initialDelaySeconds | default 5 }}
+            periodSeconds: {{ .Values.mosquittoDeployment.readinessProbe.periodSeconds | default 10 }}
           volumeMounts:
             - name: mosquitto-config
               mountPath: /mosquitto/config/mosquitto.conf
               subPath: mosquitto.conf
             - name: mosquitto-auth
               mountPath: /mosquitto/config/password.txt
-              subPath: password_file
+              subPath: password.txt
             - name: mosquitto-data
               mountPath: /mosquitto/data
-      
       volumes:
         - name: mosquitto-config
           configMap:

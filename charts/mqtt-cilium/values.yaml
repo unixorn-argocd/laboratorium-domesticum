@@ -1,5 +1,38 @@
-kubernetesClusterDomain: cluster.local
-# Configuration (Supports TPL)
+---
+# Default naming overrides
+nameOverride: ""
+fullnameOverride: ""
+
+# Deployment configuration
+mosquittoDeployment:
+  replicas: 1
+  image:
+    repository: eclipse-mosquitto
+    tag: "2.0.18"
+    pullPolicy: IfNotPresent
+  podSecurityContext:
+    fsGroup: 1883
+  initPermissions:
+    image:
+      repository: busybox
+      tag: latest
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+  readinessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+
+# Mosquitto Application Config
 mosquittoConfig:
   mosquittoConf: |-
     # This will render as: # Config for my-release-mqtt
@@ -26,47 +59,24 @@ mosquittoConfig:
     # certfile /mosquitto/certs/tls.crt
     # keyfile /mosquitto/certs/tls.key
 
-# Networking
-cilium:
-  ips: "10.9.8.7"
-  poolName: "default-pool"
-  sharingKey: "mqtt"
-
-# Deployment
-mosquittoDeployment:
-  replicas: 1
-  image:
-    repository: eclipse-mosquitto
-    tag: "2.0.18"
-  podSecurityContext:
-    fsGroup: 1883
-  initPermissions:
-    image:
-      repository: busybox
-      tag: latest
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
-  livenessProbe:
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-  readinessProbe:
-    initialDelaySeconds: 5
-    periodSeconds: 10
-    timeoutSeconds: 5
-# If you want to define the password secret outside helm to make it
-# easier to update, set create to false and existingSecret to the name
-# of your secret
+# Secret Management
 mosquittoSecrets:
   create: true
   existingSecret: ""
-  passwordData: "admin:$6$..."
+  passwordData: "admin:defaultpassword"
 
-# Storage
+# Networking & Cilium IPAM
+mqttLb:
+  type: LoadBalancer
+
+cilium:
+  assignInternalIP: "true"
+  poolName: "default-pool"
+  sharingKey: "mqtt"
+  ips: "" 
+
+# Persistence
 pvc:
   storageRequest: 1Gi
+  accessMode: ReadWriteOnce
+  storageClass: "" # Uses default storage class if empty

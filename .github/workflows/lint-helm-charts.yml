@@ -2,6 +2,7 @@ name: Lint Helm Charts
 
 on:
   pull_request:
+    # Trigger only when files in charts/ or this workflow change
     paths:
       - 'charts/**'
       - '.github/workflows/lint-helm-charts.yml'
@@ -11,15 +12,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: [actions/checkout@v6](https://github.com)
+        uses: actions/checkout@v6
         with:
-          # fetch-depth 0 is required for ct to detect changed charts correctly using git history
           fetch-depth: 0
 
+      - name: Set up Python
+        # ct requires python to run its linting logic
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
       - name: Set up Helm
-        uses: [azure/setup-helm@v4](https://github.com)
+        uses: azure/setup-helm@v4
         with:
           version: v3.14.0
 
       - name: Set up chart-testing
-        uses: [helm/chart-testing-action@v2.6.1](
+        uses: helm/chart-testing-action@v2.6.1
+
+      - name: Run chart-testing (lint)
+        # This is the step that actually triggers the results you see in the PR
+        run: ct lint --target-branch ${{ github.event.pull_request.base.ref }} --validate-maintainers=false

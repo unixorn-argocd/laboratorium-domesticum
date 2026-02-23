@@ -5,6 +5,5 @@ metadata:
   labels:
     {{- include "mqtt-cilium.labels" . | nindent 4 }}
 data:
-  # 'tpl' executes the string as a template, allowing access to .Values and .Release
   mosquitto.conf: |
 {{ tpl .Values.mosquittoConfig.mosquittoConf . | nindent 4 }}
