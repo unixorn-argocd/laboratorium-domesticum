@@ -16,17 +16,14 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-        {{- if .Values.mosquittoSecrets.create }}
-        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
-        {{- end }}
       labels:
         {{- include "mqtt-cilium.selectorLabels" . | nindent 8 }}
     spec:
       securityContext:
-        {{- toYaml .Values.mosquittoDeployment.podSecurityContext | nindent 8 }}
+        {{- toYaml (default (dict "fsGroup" 1883) .Values.mosquittoDeployment.podSecurityContext) | nindent 8 }}
       initContainers:
         - name: init-permissions
-          image: "{{ .Values.mosquittoDeployment.initPermissions.image.repository }}:{{ .Values.mosquittoDeployment.initPermissions.image.tag }}"
+          image: "{{ .Values.mosquittoDeployment.initPermissions.image.repository | default "busybox" }}:{{ .Values.mosquittoDeployment.initPermissions.image.tag | default "latest" }}"
           command: ["sh", "-c", "chown -R 1883:1883 /mosquitto/data"]
           volumeMounts:
             - name: mosquitto-data
@@ -45,20 +42,13 @@ spec:
           livenessProbe:
             tcpSocket:
               port: 1883
-            initialDelaySeconds: {{ .Values.mosquittoDeployment.livenessProbe.initialDelaySeconds | default 30 }}
-            periodSeconds: {{ .Values.mosquittoDeployment.livenessProbe.periodSeconds | default 10 }}
-          readinessProbe:
-            tcpSocket:
-              port: 1883
-            initialDelaySeconds: {{ .Values.mosquittoDeployment.readinessProbe.initialDelaySeconds | default 5 }}
-            periodSeconds: {{ .Values.mosquittoDeployment.readinessProbe.periodSeconds | default 10 }}
           volumeMounts:
             - name: mosquitto-config
               mountPath: /mosquitto/config/mosquitto.conf
               subPath: mosquitto.conf
             - name: mosquitto-auth
-              mountPath: /mosquitto/config/password_file
-              subPath: password_file
+              mountPath: /mosquitto/config/password.txt
+              subPath: password.txt
             - name: mosquitto-data
               mountPath: /mosquitto/data
       volumes:
@@ -68,6 +58,9 @@ spec:
         - name: mosquitto-auth
           secret:
             secretName: {{ $secretName }}
+            items:
+              - key: password.txt
+                path: password.txt
             defaultMode: 0600
         - name: mosquitto-data
           persistentVolumeClaim:
