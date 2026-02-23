@@ -3,6 +3,13 @@
 nameOverride: ""
 fullnameOverride: ""
 
+# values.yaml
+replicaCount: 1
+
+# Number of old ReplicaSets to retain to allow rollback.
+# Kubernetes default is 10.
+revisionHistoryLimit: 10
+
 # Deployment configuration
 mosquittoDeployment:
   replicas: 1
@@ -79,4 +86,4 @@ cilium:
 pvc:
   storageRequest: 1Gi
   accessMode: ReadWriteOnce
-  storageClass: "" # Uses default storage class if empty
+  storageClass: ""  # Uses default storage class if empty
