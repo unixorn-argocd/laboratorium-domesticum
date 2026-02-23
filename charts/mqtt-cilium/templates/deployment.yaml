@@ -64,7 +64,7 @@ spec:
               subPath: mosquitto.conf
             - name: mosquitto-auth
               mountPath: /mosquitto/config/password.txt
-              subPath: password.txt
+              subPath: password_file
             - name: mosquitto-data
               mountPath: /mosquitto/data
       
