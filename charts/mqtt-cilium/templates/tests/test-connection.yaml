@@ -30,5 +30,5 @@ spec:
           valueFrom:
             secretKeyRef:
               name: {{ default (printf "%s-auth" (include "mqtt-cilium.fullname" .)) .Values.mosquittoSecrets.existingSecret }}
-              key: password.txt
+              key: password_file
   restartPolicy: Never
