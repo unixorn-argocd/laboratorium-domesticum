@@ -3,6 +3,17 @@ entries:
   mqtt-cilium:
   - apiVersion: v2
     appVersion: 2.1.2
+    created: "2026-02-24T16:52:01.905125063Z"
+    description: A Helm chart for installing MQTT on Kubernetes
+    digest: 22e566d64443c3ffece1f64ee8804260329c1507fc2b015f4799581d738e9c35
+    icon: https://raw.githubusercontent.com/unixorn-argocd/laboratorium-domesticum/mqtt-cilium/refs/heads/main/charts/mqtt-cilium/mosquitto-color-icon.png
+    name: mqtt-cilium
+    type: application
+    urls:
+    - https://github.com/unixorn-argocd/laboratorium-domesticum/releases/download/mqtt-cilium-0.4.7/mqtt-cilium-0.4.7.tgz
+    version: 0.4.7
+  - apiVersion: v2
+    appVersion: 2.1.2
     created: "2026-02-23T13:36:43.23422685Z"
     description: A Helm chart for installing MQTT on Kubernetes
     digest: 4d296ce27555169d5d6fbc0e51e268e7de05e56dc98f659b994c85406f632456
@@ -23,4 +34,4 @@ entries:
     urls:
     - https://github.com/unixorn-argocd/laboratorium-domesticum/releases/download/mqtt-cilium-0.4.5/mqtt-cilium-0.4.5.tgz
     version: 0.4.5
-generated: "2026-02-23T13:36:43.234240856Z"
+generated: "2026-02-24T16:52:01.905138819Z"
