@@ -109,7 +109,7 @@ spec:
 
 ##### Argo CD Multi-Source Application
 
-This manifest lets you keep the `values.yaml` in one repository, and use the chart from another.
+This manifest lets you use the chart from one repository, and have `values.yaml` in another. This makes it easier to keep the yaml format correct when you edit the settings.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -185,7 +185,7 @@ helm upgrade --install my-mqtt ./mqtt-cilium
 ### `readinessProbe` settings
 
 | Parameter                            | Description                                         | Default Value     |
-| --------------------------------=--- | --------------------------------------------------- | ----------------- |
+| ------------------------------------ | --------------------------------------------------- | ----------------- |
 | `readinessProbe.initialDelaySeconds` | Liveness probe initial delay in seconds             | 30                |
 | `readinessProbe.periodSeconds`       | Time between probes                                 | 10                |
 | `readinessProbe.timeoutSeconds`      | How many seconds before timing out                  | 5                 |
