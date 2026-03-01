@@ -9,9 +9,10 @@
 # laboratorium-domesticum
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Funixorn-argocd%laboratorium-domesticum%2Fbadge%3Fref%3Dmain&style=plastic)](https://actions-badge.atrox.dev/unixorn-argocd/laboratorium-domesticum/goto?ref=main)
 [![GitHub last commit](https://img.shields.io/github/last-commit/unixorn-argocd/laboratorium-domesticum/main.svg)](https://github.com/unixorn-argocd/laboratorium-domesticum)
 [![Lint Helm Charts](https://github.com/unixorn-argocd/laboratorium-domesticum/actions/workflows/lint-helm-charts.yml/badge.svg)](https://github.com/unixorn-argocd/laboratorium-domesticum/actions/workflows/lint-helm-charts.yml)
+[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Funixorn-argocd%2Flaboratorium-domesticum%2Fbadge%3Fref%3Dmain&style=plastic)](https://actions-badge.atrox.dev/unixorn-argocd/laboratorium-domesticum/goto?ref=main)
+
 
 My Homelab `helm` charts
 
