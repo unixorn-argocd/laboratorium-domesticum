@@ -162,9 +162,9 @@ helm upgrade --install my-mqtt ./mqtt-cilium
 
 | Parameter                            | Description                                         | Default Value     |
 | ------------------------------------ | --------------------------------------------------- | ----------------- |
-| `cilium.poolName`                    | The Cilium IPAM pool to draw from                   | `default-pool`    |
+| `cilium.pool-name`                   | The Cilium IPAM pool to draw from                   | `default-pool`    |
 | `cilium.ips`                         | Static internal IP to request                       | `10.0.1.46`       |
-| `cilium.sharingKey`                  | Key to allow multiple services to share the same IP | `mqtt`            |
+| `cilium.sharin-kKey`                 | Key to allow multiple services to share the same IP | `mqtt`            |
 
 ### Mosquitto Settings
 
