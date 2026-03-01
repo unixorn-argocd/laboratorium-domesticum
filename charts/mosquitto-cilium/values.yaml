@@ -77,10 +77,10 @@ mqttLb:
   type: LoadBalancer
 
 cilium:
-  assignInternalIP: "true"
-  poolName: "default-pool"
-  sharingKey: "mqtt"
   ips: ""
+  assign-internal-ip: "true"
+  pool-name: "default-pool"     # Changed from poolName
+  sharing-key: "mqtt"           # Changed from sharingKey
 
 # Persistence
 pvc:
