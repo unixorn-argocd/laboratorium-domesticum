@@ -87,3 +87,7 @@ pvc:
   storageRequest: 1Gi
   accessMode: ReadWriteOnce
   storageClass: ""  # Uses default storage class if empty
+
+service:
+  annotations:
+    cilium.io/assign-internal-ip: "true"
