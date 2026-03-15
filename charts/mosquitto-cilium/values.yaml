@@ -82,6 +82,8 @@ cilium:
   pool-name: "default-pool"     # Changed from poolName
   sharing-key: "mqtt"           # Changed from sharingKey
 
+storageType: "pvc" # options: local, pvc
+
 # Persistence
 pvc:
   storageRequest: 1Gi
@@ -91,3 +93,7 @@ pvc:
 service:
   annotations:
     cilium.io/assign-internal-ip: "true"
+# Only used if storageType is "local"
+local:
+  sizeLimit: 512Mi
+  useRAM: false        # If true, uses RAM (tmpfs). If false, uses node disk.
