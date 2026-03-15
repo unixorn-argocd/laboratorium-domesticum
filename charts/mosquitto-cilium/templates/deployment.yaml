@@ -64,5 +64,15 @@ spec:
                 path: password.txt
             defaultMode: 0600
         - name: mosquitto-data
+          {{- if eq .Values.storageType "pvc" }}
           persistentVolumeClaim:
             claimName: {{ include "mqtt-cilium.fullname" . }}-data
+          {{- else }}
+          emptyDir:
+            {{- if .Values.local.useRAM }}
+            medium: Memory
+            {{- end }}
+            {{- if .Values.local.sizeLimit }}
+            sizeLimit: {{ .Values.local.sizeLimit }}
+            {{- end }}
+          {{- end }}

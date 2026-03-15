@@ -15,8 +15,9 @@
   - [Configuration Reference](#configuration-reference)
     - [Cilium Settings](#cilium-settings)
     - [Mosquitto Settings](#mosquitto-settings)
-    - [`livenessProbe` settings](#livenessprobe-settings)
-    - [`readinessProbe` settings](#readinessprobe-settings)
+    - [k8s settings](#k8s-settings)
+      - [`livenessProbe` settings](#livenessprobe-settings)
+      - [`readinessProbe` settings](#readinessprobe-settings)
   - [Troubleshooting](#troubleshooting)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -174,7 +175,15 @@ helm upgrade --install my-mqtt ./mqtt-cilium
 | `mosquittoConfig.mosquittoConf`      | The raw `mosquitto.conf` text                       | See `values.yaml` |
 | `pvc.storageRequest`                 | Size of the data volume                             | 1Gi               |
 
-### `livenessProbe` settings
+### k8s settings
+
+| Parameter                            | Description                                         | Default Value     | Valid Choices |
+| ------------------------------------ | --------------------------------------------------- | ----------------- | ------------- |
+| `storageType`                        | Whether to use a PVC or an `emptyDir` for storage     | pvc               | pvc or local  |
+| `sizeLimit`                          | How much local disk the `emptyDir` is allowed to use  | 512mi             | Standard sizes  |
+| `useRAM`                             | If true, uses RAM (tmpfs). If false, uses node disk.  | false             | true or false  |
+
+#### `livenessProbe` settings
 
 | Parameter                            | Description                                         | Default Value     |
 | ------------------------------------ | --------------------------------------------------- | ----------------- |
@@ -182,7 +191,7 @@ helm upgrade --install my-mqtt ./mqtt-cilium
 | `livenessProbe.periodSeconds`        | Time between probes                                 | 10                |
 | `livenessProbe.timeoutSeconds`       | How many seconds before timing out                  | 5                 |
 
-### `readinessProbe` settings
+#### `readinessProbe` settings
 
 | Parameter                            | Description                                         | Default Value     |
 | ------------------------------------ | --------------------------------------------------- | ----------------- |
